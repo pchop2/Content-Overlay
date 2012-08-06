@@ -29,11 +29,11 @@ function popup_ads_boot(){
     //unset the varnish cookie by making it expire in the past
     if(isset($_COOKIE['SESS00000000000000000000000000000000'])){
       $wasset = TRUE;
-      setcookie('SESS00000000000000000000000000000000', '', time()-360000, '/');
+      setcookie('SESS00000000000000000000000000000000', '', time() - variable_get('popup_ads_cookie_duration', 1800000) / 1000, '/');
     } 
     //refresh the signup wall cookie
     if(isset($_COOKIE['popup-ads-visited'])){
-      setcookie('popup-ads-visited', 'true', time()+36000000, '/');
+      setcookie('popup-ads-visited', 'true', time() + variable_get('popup_ads_cookie_duration', 1800000) / 1000, '/');
     }
     
     //do a drupal_bootstrap to get some basic drupal functions
@@ -85,7 +85,7 @@ function popup_ads_boot(){
   } catch(Exception $e) {
     if(isset($_COOKIE['SESS00000000000000000000000000000000'])){
       //unset the varnish cookie by making it expire in the past
-      setcookie('SESS00000000000000000000000000000000', '', time()-360000, '/');
+      setcookie('SESS00000000000000000000000000000000', '', time() - variable_get('popup_ads_cookie_duration', 1800000) / 1000, '/');
     }
   }
 }

@@ -32,22 +32,23 @@
   /**
    *  String parsing function - basically find the cookie with the right name and grab its value
    */
-  function get_cookie(c_name){
-    if (document.cookie.length > 0){
-      var c_start = document.cookie.indexOf(c_name + "=");
-      if (c_start != -1){
-        c_start = c_start + c_name.length + 1;console.log(c_start);
-        c_end = document.cookie.indexOf(";", c_start);console.log(document.cookie.substring(c_start, c_end));
-        if (c_end == -1){
-           c_end = document.cookie.length;
-         }
-        return document.cookie.substring(c_start, c_end);
+  function get_cookie(name) {
+    var cookieName = name + "=";
+    var cookieData = document.cookie.split(';');
+    for(var i = 0; i < cookieData.length; i++) {
+      var c = cookieData[i];
+      while (c.charAt(0)==' ') {
+        c = c.substring(1,c.length);
+      }
+      if (c.indexOf(cookieName) == 0) {
+        return c.substring(cookieName.length,c.length);
       }
     }
-    return false;
+    return null;
   }
   
-  $(document).ready( function() {$('#mask, .window').hide();
+  $(document).ready( function() {
+    $('#mask, .window').hide();
     $('#mask, .window .close').click(function() {
       $('#mask, .window').hide();
     });
@@ -75,7 +76,7 @@
     });
 
     // If cookie is expired, display the pop up
-	  if (!get_cookie('popup-ads-visited')) {
+	  if (get_cookie('popup-ads-visited') == null) {
 		  launch_popup('#popup-ads .window');
 		  var date = new Date();
       var duration = Drupal.settings.popup_ads.cookie_duration * 1;
