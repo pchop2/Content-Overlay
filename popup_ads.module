@@ -187,20 +187,20 @@ function popup_ads_popup_ads() {
   // Check to see if the path coincides with any excluded paths
   $current_page = drupal_get_path_alias($_GET['q']);    
   $excluded_pages = variable_get('popup_ads_excluded_pages', '');
-  if(_popup_ads_contains($current_page, $excluded_pages)) {dpm('PATH');
+  if(_popup_ads_contains($current_page, $excluded_pages)) {
     $excluded = TRUE;
   }
 
   // Checks to see if the user's role coincides with any excluded roles
   $excluded_roles = array_intersect(variable_get('popup_ads_excluded_roles', array()), array_keys($user->roles));
-  if ($excluded_roles) {dpm('ROLES');
+  if ($excluded_roles) {
     $excluded = TRUE;
   }
 
   // Checks to see if the current node is in the list of excluded node types
   $node = menu_get_object();
   $excluded_nodes = variable_get('popup_ads_node_types', array());
-  if ($excluded_nodes[$node->type] !== 0) {dpm('NODE');
+  if ($excluded_nodes[$node->type] !== 0) {
     $excluded = TRUE;
   }
 
