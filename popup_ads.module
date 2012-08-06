@@ -1,0 +1,260 @@
+<?php
+/** 
+ *  This module provides a way to entice users to signup by showing intermediate pages 
+ *  You will need to set the cookie 'popup_ads_visited' when the conditions you wish to enforce are met
+ */
+ 
+//include our file that has forms and menu hooks
+include_once('popup_ads.register.inc');
+
+/**
+ *  Implementation of hook_boot - may need to run even for cached pages to check that the user
+ *  should be allowed to continue
+ *
+ *  Added a try catch surrounding the entire thing - should something go wrong on the server - for example, 
+ *  drupal_bootstrap fail because of an overloaded database - we want to just unset the cookie and return
+ *
+ *  IMPORTANT NOTE: Given the current order of code - IF they were to enable both signup wall and ad wall at the same time
+ *  In situations where both would show - the ad wall will take precedence.
+ */
+function popup_ads_boot(){
+  try {
+    //get the variables once since we'll need to check them a few times
+    $popup_ads = variable_get('popup_ads_enabled', FALSE);
+    $ad_wall = variable_get('popup_ads_enabled', FALSE);
+    
+    //try to verify when we're coming through on purpose
+    $wasset = FALSE;
+    
+    //unset the varnish cookie by making it expire in the past
+    if(isset($_COOKIE['SESS00000000000000000000000000000000'])){
+      $wasset = TRUE;
+      setcookie('SESS00000000000000000000000000000000', '', time()-360000, '/');
+    } 
+    //refresh the signup wall cookie
+    if(isset($_COOKIE['popup-ads-visited'])){
+      setcookie('popup-ads-visited', 'true', time()+36000000, '/');
+    }
+    
+    //do a drupal_bootstrap to get some basic drupal functions
+    drupal_bootstrap(DRUPAL_BOOTSTRAP_PATH);
+    
+    //get the user and request url
+    $orig_dest = drupal_get_path_alias($_GET['q']);    
+    global $user;
+    //make sure the homepage redirects to /
+    if($orig_dest == 'homepage'){
+      $orig_dest = '';
+    }
+    
+    //Get the page we're coming from
+    $refer_page = _popup_ads_get_referrer();
+
+    //Handle the signup wall
+    //We want to show the signup wall if the user isn't logged in, hasn't seen it and is on the 3rth page view
+    //We need to check it for non-varnish, but can't check it for varnish
+    if($popup_ads && !isset($_COOKIE['popup-ads-visited']) && $user->uid == 0 && $wasset && (!isset($_COOKIE['popup-ads-count']) ||
+         $_COOKIE['popup-ads-count'] > 1) ){
+      //necessary for the check below
+      $dontshow = variable_get('popup_ads_exclude', '');
+      //  Check that the destination is not the signup wall
+      if (!(stripos($orig_dest, 'signup') === 0)) {         
+        if (arg(0) == 'node' && is_numeric(arg(1))) {
+          if (_popup_ads_check_node(arg(1), $orig_dest)) {
+            _popup_ads_show_popup_ads($orig_dest, arg(1));
+          } 
+        } 
+        else if (!_popup_ads_has_values($types) && !_popup_ads_contains($orig_dest, $dontshow)) {
+          _popup_ads_show_popup_ads($orig_dest);
+        } 
+      }
+      return; // jump out so the ad wall can't get shown also
+    }
+    
+    //Handle the ad wall
+    //Check that the ad wall is enabled and that they haven't seen it this session.
+    if($ad_wall && !isset($_COOKIE['popup-ads-session-seen']) && $wasset && _popup_ads_check_ad_referer($refer_page)){      
+      variable_set('popup_ads_cur', array('arg' => arg(1), 'dest'=>$orig_dest, 'home'=>drupal_is_front_page()));
+      if(arg(0) == 'node' && is_numeric(arg(1)) && _popup_ads_check_ad_node(arg(1), $orig_dest)) {
+        _popup_ads_show_ad_wall($orig_dest, arg(1));
+      } else if(drupal_is_front_page()) {
+        _popup_ads_show_ad_wall($orig_dest, arg(1));
+      }  
+    }
+    
+  } catch(Exception $e) {
+    if(isset($_COOKIE['SESS00000000000000000000000000000000'])){
+      //unset the varnish cookie by making it expire in the past
+      setcookie('SESS00000000000000000000000000000000', '', time()-360000, '/');
+    }
+  }
+}
+
+/**
+ *  get the referer page - if its empty (they just typed the url or refreshed, just dump out
+ */
+ function _popup_ads_get_referrer(){
+   $refer_page = FALSE;
+   if(isset($_SERVER['HTTP_REFERER'])){
+     $host = parse_url($_SERVER['HTTP_REFERER'], PHP_URL_HOST);
+     //check that the request came from our server
+     if($host == $_SERVER['HTTP_HOST']){
+       $refer_page = parse_url($_SERVER['HTTP_REFERER'], PHP_URL_PATH);
+     }
+   } 
+   
+   return $refer_page;
+ }
+ 
+/**
+ *  Implementation of hook_init
+ *  add js to set a cookie to make varnish send the person's next request to apache
+ *  
+ *  we need to turn off aggregation for our js file for this to work properly
+ */
+function popup_ads_init(){
+  if (arg(2) == 'popup_ads') {
+
+  drupal_add_css(drupal_get_path('module', 'popup_ads') . '/theme/popup_ads.css');
+  drupal_add_js(drupal_get_path('module', 'popup_ads') . '/theme/popup_ads.js', 'module', 'header', FALSE, FALSE, FALSE);
+
+}
+
+  // Settings variable from configuration
+  drupal_add_js(array('popup_ads' => array(
+    'cookie_duration' => variable_get('popup_ads_cookie_duration', 1800000),
+  )), 'setting');
+
+  $types = variable_get('popup_ads_types', FALSE);
+}
+
+
+/**
+ *  A simple utility function to check whether a node is the correct type to show the signup wall.
+ */
+ function _popup_ads_check_node($nid, $orig_dest=FALSE){
+   $types = variable_get('popup_ads_types', FALSE);
+   //check to see if the node is a type that we should show the signup wall for
+   $dontshow = variable_get('popup_ads_exclude', '');
+   
+   $node = db_fetch_object(db_query('select type from {node} where nid = %d', $nid));
+   //using a custom function to trim extra newline characters - using just \n for cross os support
+   return (!_popup_ads_has_values($types) || $types[$node->type]) && (!$orig_dest || !_popup_ads_contains($orig_dest, $dontshow) );
+ }
+ 
+/**
+ *  A simple utility function to check whether a node is the correct type to show the ad wall.
+ */
+function _popup_ads_check_ad_node($nid, $orig_dest=FALSE){
+  $types = variable_get('popup_ads_ad_types', array());
+  //check to see if the node is a type that we should show the signup wall for
+  $dontshow = variable_get('popup_ads_ad_exclude', '');
+   
+  $node = db_fetch_object(db_query('select type from {node} where nid = %d', $nid));
+  //using a custom function to trim extra newline characters - using just \n for cross os support
+  return (!_popup_ads_has_values($types) || $types[$node->type]) && (!$orig_dest || !_popup_ads_contains($orig_dest, $dontshow) );
+}
+
+/*
+ *  Helper function to see if the current url is in the list of urls to not show the signup page for
+ */
+function _popup_ads_contains($path, $noshow){
+  $page_match = drupal_match_path($path, $noshow);
+  if ($path != $_GET['q']) {
+    $page_match = $page_match || drupal_match_path($_GET['q'], $noshow);
+  }
+  return $page_match;   
+}
+  
+################################## THEME FUNCTIONS ################################### 
+/*
+ * Theme function to theme the signup page
+ */
+function popup_ads_theme($existing, $type, $theme, $path) {
+  return array(
+    'popup_ads' => array(
+      'arguments' => array('popup_node' => NULL, 'nation_issue_current' => NULL),
+      'path' => drupal_get_path('module', 'popup_ads') . '/theme',
+      'template' => 'popup_ads',
+    ),
+  );
+}
+
+
+// put the popup together.
+function popup_ads_popup_ads() {
+  global $nation_issue_current;
+  global $user;
+
+  $output = '';
+  $output .= theme('popup_ads');
+
+  $current_page = drupal_get_path_alias($_GET['q']);    
+  $excluded_pages = variable_get('popup_ads_excluded_pages', '');
+  $excluded_roles = array_intersect(variable_get('popup_ads_excluded_roles', array()), array_keys($user->roles)); 
+
+  if(($user->uid > 0 && $excluded_roles > 0) || _popup_ads_contains($current_page, $excluded_pages)){
+    $excluded = TRUE;
+  }
+
+  if(!$excluded && !variable_get('popup_ads_ad_enabled', FALSE) && !variable_get('popup_ads_enabled', FALSE) && variable_get('popup_ads_enabled', FALSE)) {
+    $results = db_query("SELECT n.nid AS nid, n.created AS node_created FROM {node} n WHERE ((n.type LIKE 'popup_ads') AND (n.status = 1)) ORDER BY node_created DESC LIMIT 0, 1");
+    $popup_nid = db_fetch_array($results);
+    if($popup_nid['nid']) {
+      $popup_node = node_build_content(node_load($popup_nid['nid']));
+      $output .= theme('popup_ads', $popup_node, $nation_issue_current);
+    }
+  }
+
+  return $output;
+}
+
+
+/**
+ * Implementation of hook_footer.
+ */
+function popup_ads_footer() {
+  $output = popup_ads_popup_ads();
+  if($output != '') {
+    return $output;
+  }
+}
+
+/**
+ *  Using this function to abstract away how we actually get the ad as its currently in flux
+ */
+function _popup_ads_get_ad(){
+  $markup = '
+  <div id="adwall-block" class="block block-google_admanager">
+    <div class="content">
+      <div id="gam-holder-adwall-block" class="gam-holder">
+  			<div class="gam_ad_policy_link_leaderboard">
+  				<a href="" class="gam_ad_policy_link">'.t('Ad Policy').'</a>
+  			</div>
+  			<script type="text/javascript">
+  			  GA_googleAddSlot("ca-pub-7565666144516430", "adwall_interstitial");
+  			  GA_googleFillSlot("adwall_interstitial");
+  			</script>
+  		</div>
+  	</div>  
+  </div>';
+  
+  return $markup;
+}
+
+
+/**
+ *  Checks if an array has values that are not false or 0
+ */
+function _popup_ads_has_values($array){
+  if(!is_array($array)) { return FALSE; }
+  foreach($array as $value){
+    if($value !== 0 && $value !== FALSE){
+      return TRUE;
+    }
+  }
+  return FALSE;
+}
+
+
+

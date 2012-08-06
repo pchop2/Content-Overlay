@@ -1,0 +1,61 @@
+#mask {
+	position: absolute;
+	left: 0;
+	top: 0;
+	z-index: 9998;
+	background-color: #000;
+	display: none;
+}
+
+#popup-ads .window {
+	position: fixed;
+	width: 660px;
+	height: 450px;
+	display: none;
+	z-index: 9999;
+  background-color: #fff;
+}
+
+#popup-ads .close {
+	position: absolute;
+	top: -10px;
+	right: 0;
+	color: #fff;
+}
+
+#popup-ads .left-column {
+  float: left;
+	width: 282px;
+	height: 450px;
+	border-right: dashed 2px #666;
+}
+
+#popup-ads .right-column {
+  float: left;
+	width: 376px;
+	height: 450px;
+	overflow: hidden;
+}
+
+#popup-ads img {
+	display: block;
+}
+
+#popup-ads .issue-cover {
+	padding: 0 16px;
+}
+
+#popup-ads .half-content {
+	height: 405px;
+	width: 376px;
+	overflow: hidden;
+}
+
+#popup-ads .login-buttons {
+	background: url('images/button-bg.gif');
+	height: 45px;
+}
+
+#popup-ads .login-buttons div{
+	float: left;
+}
