@@ -1,61 +1,31 @@
 #mask {
-	position: absolute;
-	left: 0;
-	top: 0;
-	z-index: 9998;
-	background-color: #000;
-	display: none;
+  position: absolute;
+  left: 0;
+  top: 0;
+  z-index: 9998;
+  background-color: #000;
+  display: none;
 }
 
 #content-overlay .window {
-	position: fixed;
-	width: 660px;
-	height: 450px;
-	display: none;
-	z-index: 9999;
+  position: fixed;
+  display: none;
+  z-index: 9999;
   background-color: #fff;
 }
 
 #content-overlay .close {
-	position: absolute;
-	top: -10px;
-	right: 0;
-	color: #fff;
-}
-
-#content-overlay .left-column {
-  float: left;
-	width: 282px;
-	height: 450px;
-	border-right: dashed 2px #666;
-}
-
-#content-overlay .right-column {
-  float: left;
-	width: 376px;
-	height: 450px;
-	overflow: hidden;
-}
-
-#content-overlay img {
-	display: block;
-}
-
-#content-overlay .issue-cover {
-	padding: 0 16px;
-}
-
-#content-overlay .half-content {
-	height: 405px;
-	width: 376px;
-	overflow: hidden;
+  position: absolute;
+  top: -20px;
+  right: 0;
+  color: #fff;
 }
 
 #content-overlay .login-buttons {
-	background: url('images/button-bg.gif');
-	height: 45px;
+  background: url('images/button-bg.gif');
+  height: 45px;
 }
 
-#content-overlay .login-buttons div{
-	float: left;
+#content-overlay .login-buttons div {
+  float: left;
 }

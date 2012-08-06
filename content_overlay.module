@@ -189,7 +189,7 @@ function _content_overlay_contains($path, $noshow){
 function content_overlay_theme($existing, $type, $theme, $path) {
   return array(
     'content_overlay' => array(
-      'arguments' => array('popup_node' => NULL, 'nation_issue_current' => NULL),
+      'arguments' => array('box_width' => variable_get('content_overlay_box_width', '700px'), 'box_height' => variable_get('content_overlay_box_height', '450px'),),
       'path' => drupal_get_path('module', 'content_overlay') . '/theme',
       'template' => 'content_overlay',
     ),
