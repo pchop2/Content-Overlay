@@ -23,11 +23,11 @@ function content_overlay_boot(){
     //unset the varnish cookie by making it expire in the past
     if(isset($_COOKIE['SESS00000000000000000000000000000000'])){
       $wasset = TRUE;
-      setcookie('SESS00000000000000000000000000000000', '', time() - variable_get('content_overlay_cookie_duration', 1800000) , '/');
+      setcookie('SESS00000000000000000000000000000000', '', time() - variable_get('content_overlay_cookie_duration', 1800) , '/');
     } 
     //refresh the signup wall cookie
     if(isset($_COOKIE['content-overlay-visited'])){
-      setcookie('content-overlay-visited', 'true', time() + variable_get('content_overlay_cookie_duration', 1800000), '/');
+      setcookie('content-overlay-visited', 'true', time() + variable_get('content_overlay_cookie_duration', 1800), '/');
     }
     
     //do a drupal_bootstrap to get some basic drupal functions
@@ -79,7 +79,7 @@ function content_overlay_boot(){
   } catch(Exception $e) {
     if(isset($_COOKIE['SESS00000000000000000000000000000000'])){
       //unset the varnish cookie by making it expire in the past
-      setcookie('SESS00000000000000000000000000000000', '', time() - variable_get('content_overlay_cookie_duration', 1800000), '/');
+      setcookie('SESS00000000000000000000000000000000', '', time() - variable_get('content_overlay_cookie_duration', 1800), '/');
     }
   }
 }
