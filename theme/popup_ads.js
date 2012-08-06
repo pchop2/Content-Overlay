@@ -38,7 +38,7 @@
     for(var i = 0; i < cookieData.length; i++) {
       var c = cookieData[i];
       while (c.charAt(0)==' ') {
-        c = c.substring(1,c.length);
+        c = c.substring(1, c.length);
       }
       if (c.indexOf(cookieName) == 0) {
         return c.substring(cookieName.length,c.length);
@@ -76,7 +76,7 @@
     });
 
     // If cookie is expired, display the pop up
-	  if (get_cookie('popup-ads-visited') == null) {
+	  if (get_cookie('popup-ads-visited') == null) {console.log(document.cookie);
 		  launch_popup('#popup-ads .window');
 		  var date = new Date();
       var duration = Drupal.settings.popup_ads.cookie_duration * 1;

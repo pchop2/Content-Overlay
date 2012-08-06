@@ -112,13 +112,9 @@ function popup_ads_boot(){
  *  
  *  we need to turn off aggregation for our js file for this to work properly
  */
-function popup_ads_init(){
-  if (arg(2) == 'popup_ads') {
-
+function popup_ads_init() {
   drupal_add_css(drupal_get_path('module', 'popup_ads') . '/theme/popup_ads.css');
   drupal_add_js(drupal_get_path('module', 'popup_ads') . '/theme/popup_ads.js', 'module', 'header', FALSE, FALSE, FALSE);
-
-}
 
   // Settings variable from configuration
   drupal_add_js(array('popup_ads' => array(
@@ -183,27 +179,34 @@ function popup_ads_theme($existing, $type, $theme, $path) {
 
 // put the popup together.
 function popup_ads_popup_ads() {
-  global $nation_issue_current;
   global $user;
 
   $output = '';
-  $output .= theme('popup_ads');
+  $excluded = FALSE;
 
+  // Check to see if the path coincides with any excluded paths
   $current_page = drupal_get_path_alias($_GET['q']);    
   $excluded_pages = variable_get('popup_ads_excluded_pages', '');
-  $excluded_roles = array_intersect(variable_get('popup_ads_excluded_roles', array()), array_keys($user->roles)); 
-
-  if(($user->uid > 0 && $excluded_roles > 0) || _popup_ads_contains($current_page, $excluded_pages)){
+  if(_popup_ads_contains($current_page, $excluded_pages)) {dpm('PATH');
     $excluded = TRUE;
   }
 
-  if(!$excluded && !variable_get('popup_ads_ad_enabled', FALSE) && !variable_get('popup_ads_enabled', FALSE) && variable_get('popup_ads_enabled', FALSE)) {
-    $results = db_query("SELECT n.nid AS nid, n.created AS node_created FROM {node} n WHERE ((n.type LIKE 'popup_ads') AND (n.status = 1)) ORDER BY node_created DESC LIMIT 0, 1");
-    $popup_nid = db_fetch_array($results);
-    if($popup_nid['nid']) {
-      $popup_node = node_build_content(node_load($popup_nid['nid']));
-      $output .= theme('popup_ads', $popup_node, $nation_issue_current);
-    }
+  // Checks to see if the user's role coincides with any excluded roles
+  $excluded_roles = array_intersect(variable_get('popup_ads_excluded_roles', array()), array_keys($user->roles));
+  if ($excluded_roles) {dpm('ROLES');
+    $excluded = TRUE;
+  }
+
+  // Checks to see if the current node is in the list of excluded node types
+  $node = menu_get_object();
+  $excluded_nodes = variable_get('popup_ads_node_types', array());
+  if ($excluded_nodes[$node->type] !== 0) {dpm('NODE');
+    $excluded = TRUE;
+  }
+
+  // If any one of the above criterias are bot triggered, we show the pop up box on the page
+  if ($excluded != TRUE) {
+    $output .= theme('popup_ads');
   }
 
   return $output;

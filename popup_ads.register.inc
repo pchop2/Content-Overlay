@@ -51,7 +51,7 @@ function popup_ads_admin_settings() {
   $form['types']['popup_ads_node_types'] = array(
    '#type' => 'checkboxes', 
    '#title' => t('Excluded Node Types'), 
-   '#default_value' => variable_get('popup_ads_types', array()),
+   '#default_value' => variable_get('popup_ads_node_types', array()),
    '#options' => $nodetypes,
    '#description' => t('Which node types will show a signup wall page when navigated to by anonymous users.'),
   );
@@ -68,7 +68,7 @@ function popup_ads_admin_settings() {
     '#type' => 'textarea',
     '#title' => t('Excluded Pages'),
     '#description' => t('Enter one page per line as Drupal paths. The "*" character is a wildcard. Example paths are blog for the blog page and blog/* for every personal blog. <front> is the front page.'),
-    '#default_value' => variable_get('popup_ads_excluded_pages', ''),
+    '#default_value' => variable_get('popup_ads_excluded_pages', 'admin/*'),
   );
 
   return system_settings_form($form);
