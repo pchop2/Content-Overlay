@@ -120,8 +120,6 @@ function popup_ads_init() {
   drupal_add_js(array('popup_ads' => array(
     'cookie_duration' => variable_get('popup_ads_cookie_duration', 1800000),
   )), 'setting');
-
-  $types = variable_get('popup_ads_types', FALSE);
 }
 
 
@@ -200,7 +198,7 @@ function popup_ads_popup_ads() {
   // Checks to see if the current node is in the list of excluded node types
   $node = menu_get_object();
   $excluded_nodes = variable_get('popup_ads_node_types', array());
-  if ($excluded_nodes[$node->type] !== 0) {
+  if ($node->type && $excluded_nodes[$node->type] !== 0) {
     $excluded = TRUE;
   }
 
