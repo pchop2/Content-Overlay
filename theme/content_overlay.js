@@ -54,7 +54,7 @@
     });
 
     $(window).resize(function() {
-      var box = $('#popup-ads .window');
+      var box = $('#content-overlay .window');
 
       // Get the screen height and width
       var maskHeight = $(document).height();
@@ -76,12 +76,12 @@
     });
 
     // If cookie is expired, display the pop up
-	  if (get_cookie('popup-ads-visited') == null) {console.log(document.cookie);
-		  launch_popup('#popup-ads .window');
+	  if (get_cookie('content-overlay-visited') == null) {console.log(document.cookie);
+		  launch_popup('#content-overlay .window');
 		  var date = new Date();
-      var duration = Drupal.settings.popup_ads.cookie_duration * 1;
+      var duration = Drupal.settings.content_overlay.cookie_duration * 1;
 		  date.setTime(date.getTime() + duration);
-		  document.cookie = 'popup-ads-visited=TRUE; path=/; expires=' + date.toGMTString() + ';';
+		  document.cookie = 'content-overlay-visited=TRUE; path=/; expires=' + date.toGMTString() + ';';
     }
   });
 })(jQuery);

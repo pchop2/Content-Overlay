@@ -1,4 +1,0 @@
-name = "Popup Ads"
-description = "Shows an ad in a lightbox"
-core = 6.x
-package = "Custom"

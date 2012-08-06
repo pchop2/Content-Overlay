@@ -1,11 +1,11 @@
 <?php
 /** 
  *  This module provides a way to entice users to signup by showing intermediate pages 
- *  You will need to set the cookie 'popup_ads_visited' when the conditions you wish to enforce are met
+ *  You will need to set the cookie 'content_overlay_visited' when the conditions you wish to enforce are met
  */
  
 //include our file that has forms and menu hooks
-include_once('popup_ads.register.inc');
+include_once('content_overlay.register.inc');
 
 /**
  *  Implementation of hook_boot - may need to run even for cached pages to check that the user
@@ -17,23 +17,19 @@ include_once('popup_ads.register.inc');
  *  IMPORTANT NOTE: Given the current order of code - IF they were to enable both signup wall and ad wall at the same time
  *  In situations where both would show - the ad wall will take precedence.
  */
-function popup_ads_boot(){
-  try {
-    //get the variables once since we'll need to check them a few times
-    $popup_ads = variable_get('popup_ads_enabled', FALSE);
-    $ad_wall = variable_get('popup_ads_enabled', FALSE);
-    
+function content_overlay_boot(){
+  try {    
     //try to verify when we're coming through on purpose
     $wasset = FALSE;
     
     //unset the varnish cookie by making it expire in the past
     if(isset($_COOKIE['SESS00000000000000000000000000000000'])){
       $wasset = TRUE;
-      setcookie('SESS00000000000000000000000000000000', '', time() - variable_get('popup_ads_cookie_duration', 1800000) / 1000, '/');
+      setcookie('SESS00000000000000000000000000000000', '', time() - variable_get('content_overlay_cookie_duration', 1800000) / 1000, '/');
     } 
     //refresh the signup wall cookie
-    if(isset($_COOKIE['popup-ads-visited'])){
-      setcookie('popup-ads-visited', 'true', time() + variable_get('popup_ads_cookie_duration', 1800000) / 1000, '/');
+    if(isset($_COOKIE['content-overlay-visited'])){
+      setcookie('content-overlay-visited', 'true', time() + variable_get('content_overlay_cookie_duration', 1800000) / 1000, '/');
     }
     
     //do a drupal_bootstrap to get some basic drupal functions
@@ -48,24 +44,24 @@ function popup_ads_boot(){
     }
     
     //Get the page we're coming from
-    $refer_page = _popup_ads_get_referrer();
+    $refer_page = _content_overlay_get_referrer();
 
     //Handle the signup wall
     //We want to show the signup wall if the user isn't logged in, hasn't seen it and is on the 3rth page view
     //We need to check it for non-varnish, but can't check it for varnish
-    if($popup_ads && !isset($_COOKIE['popup-ads-visited']) && $user->uid == 0 && $wasset && (!isset($_COOKIE['popup-ads-count']) ||
-         $_COOKIE['popup-ads-count'] > 1) ){
+    if($content_overlay && !isset($_COOKIE['content-overlay-visited']) && $user->uid == 0 && $wasset && (!isset($_COOKIE['content-overlay-count']) ||
+         $_COOKIE['content-overlay-count'] > 1) ){
       //necessary for the check below
-      $dontshow = variable_get('popup_ads_exclude', '');
+      $dontshow = variable_get('content_overlay_exclude', '');
       //  Check that the destination is not the signup wall
       if (!(stripos($orig_dest, 'signup') === 0)) {         
         if (arg(0) == 'node' && is_numeric(arg(1))) {
-          if (_popup_ads_check_node(arg(1), $orig_dest)) {
-            _popup_ads_show_popup_ads($orig_dest, arg(1));
+          if (_content_overlay_check_node(arg(1), $orig_dest)) {
+            _content_overlay_show_content_overlay($orig_dest, arg(1));
           } 
         } 
-        else if (!_popup_ads_has_values($types) && !_popup_ads_contains($orig_dest, $dontshow)) {
-          _popup_ads_show_popup_ads($orig_dest);
+        else if (!_content_overlay_has_values($types) && !_content_overlay_contains($orig_dest, $dontshow)) {
+          _content_overlay_show_content_overlay($orig_dest);
         } 
       }
       return; // jump out so the ad wall can't get shown also
@@ -73,19 +69,19 @@ function popup_ads_boot(){
     
     //Handle the ad wall
     //Check that the ad wall is enabled and that they haven't seen it this session.
-    if($ad_wall && !isset($_COOKIE['popup-ads-session-seen']) && $wasset && _popup_ads_check_ad_referer($refer_page)){      
-      variable_set('popup_ads_cur', array('arg' => arg(1), 'dest'=>$orig_dest, 'home'=>drupal_is_front_page()));
-      if(arg(0) == 'node' && is_numeric(arg(1)) && _popup_ads_check_ad_node(arg(1), $orig_dest)) {
-        _popup_ads_show_ad_wall($orig_dest, arg(1));
+    if($ad_wall && !isset($_COOKIE['content-overlay-session-seen']) && $wasset && _content_overlay_check_ad_referer($refer_page)){      
+      variable_set('content_overlay_cur', array('arg' => arg(1), 'dest'=>$orig_dest, 'home'=>drupal_is_front_page()));
+      if(arg(0) == 'node' && is_numeric(arg(1)) && _content_overlay_check_ad_node(arg(1), $orig_dest)) {
+        _content_overlay_show_ad_wall($orig_dest, arg(1));
       } else if(drupal_is_front_page()) {
-        _popup_ads_show_ad_wall($orig_dest, arg(1));
+        _content_overlay_show_ad_wall($orig_dest, arg(1));
       }  
     }
     
   } catch(Exception $e) {
     if(isset($_COOKIE['SESS00000000000000000000000000000000'])){
       //unset the varnish cookie by making it expire in the past
-      setcookie('SESS00000000000000000000000000000000', '', time() - variable_get('popup_ads_cookie_duration', 1800000) / 1000, '/');
+      setcookie('SESS00000000000000000000000000000000', '', time() - variable_get('content_overlay_cookie_duration', 1800000) / 1000, '/');
     }
   }
 }
@@ -93,7 +89,7 @@ function popup_ads_boot(){
 /**
  *  get the referer page - if its empty (they just typed the url or refreshed, just dump out
  */
- function _popup_ads_get_referrer(){
+ function _content_overlay_get_referrer(){
    $refer_page = FALSE;
    if(isset($_SERVER['HTTP_REFERER'])){
      $host = parse_url($_SERVER['HTTP_REFERER'], PHP_URL_HOST);
@@ -112,13 +108,13 @@ function popup_ads_boot(){
  *  
  *  we need to turn off aggregation for our js file for this to work properly
  */
-function popup_ads_init() {
-  drupal_add_css(drupal_get_path('module', 'popup_ads') . '/theme/popup_ads.css');
-  drupal_add_js(drupal_get_path('module', 'popup_ads') . '/theme/popup_ads.js', 'module', 'header', FALSE, FALSE, FALSE);
+function content_overlay_init() {
+  drupal_add_css(drupal_get_path('module', 'content_overlay') . '/theme/content_overlay.css');
+  drupal_add_js(drupal_get_path('module', 'content_overlay') . '/theme/content_overlay.js', 'module', 'header', FALSE, FALSE, FALSE);
 
   // Settings variable from configuration
-  drupal_add_js(array('popup_ads' => array(
-    'cookie_duration' => variable_get('popup_ads_cookie_duration', 1800000),
+  drupal_add_js(array('content_overlay' => array(
+    'cookie_duration' => variable_get('content_overlay_cookie_duration', 1800000),
   )), 'setting');
 }
 
@@ -126,33 +122,33 @@ function popup_ads_init() {
 /**
  *  A simple utility function to check whether a node is the correct type to show the signup wall.
  */
- function _popup_ads_check_node($nid, $orig_dest=FALSE){
-   $types = variable_get('popup_ads_types', FALSE);
+ function _content_overlay_check_node($nid, $orig_dest=FALSE){
+   $types = variable_get('content_overlay_types', FALSE);
    //check to see if the node is a type that we should show the signup wall for
-   $dontshow = variable_get('popup_ads_exclude', '');
+   $dontshow = variable_get('content_overlay_exclude', '');
    
    $node = db_fetch_object(db_query('select type from {node} where nid = %d', $nid));
    //using a custom function to trim extra newline characters - using just \n for cross os support
-   return (!_popup_ads_has_values($types) || $types[$node->type]) && (!$orig_dest || !_popup_ads_contains($orig_dest, $dontshow) );
+   return (!_content_overlay_has_values($types) || $types[$node->type]) && (!$orig_dest || !_content_overlay_contains($orig_dest, $dontshow) );
  }
  
 /**
  *  A simple utility function to check whether a node is the correct type to show the ad wall.
  */
-function _popup_ads_check_ad_node($nid, $orig_dest=FALSE){
-  $types = variable_get('popup_ads_ad_types', array());
+function _content_overlay_check_ad_node($nid, $orig_dest=FALSE){
+  $types = variable_get('content_overlay_ad_types', array());
   //check to see if the node is a type that we should show the signup wall for
-  $dontshow = variable_get('popup_ads_ad_exclude', '');
+  $dontshow = variable_get('content_overlay_ad_exclude', '');
    
   $node = db_fetch_object(db_query('select type from {node} where nid = %d', $nid));
   //using a custom function to trim extra newline characters - using just \n for cross os support
-  return (!_popup_ads_has_values($types) || $types[$node->type]) && (!$orig_dest || !_popup_ads_contains($orig_dest, $dontshow) );
+  return (!_content_overlay_has_values($types) || $types[$node->type]) && (!$orig_dest || !_content_overlay_contains($orig_dest, $dontshow) );
 }
 
 /*
  *  Helper function to see if the current url is in the list of urls to not show the signup page for
  */
-function _popup_ads_contains($path, $noshow){
+function _content_overlay_contains($path, $noshow){
   $page_match = drupal_match_path($path, $noshow);
   if ($path != $_GET['q']) {
     $page_match = $page_match || drupal_match_path($_GET['q'], $noshow);
@@ -164,47 +160,52 @@ function _popup_ads_contains($path, $noshow){
 /*
  * Theme function to theme the signup page
  */
-function popup_ads_theme($existing, $type, $theme, $path) {
+function content_overlay_theme($existing, $type, $theme, $path) {
   return array(
-    'popup_ads' => array(
+    'content_overlay' => array(
       'arguments' => array('popup_node' => NULL, 'nation_issue_current' => NULL),
-      'path' => drupal_get_path('module', 'popup_ads') . '/theme',
-      'template' => 'popup_ads',
+      'path' => drupal_get_path('module', 'content_overlay') . '/theme',
+      'template' => 'content_overlay',
     ),
   );
 }
 
 
 // put the popup together.
-function popup_ads_popup_ads() {
+function content_overlay_box() {
   global $user;
 
   $output = '';
   $excluded = FALSE;
 
+  // Check to see if it's actually enabled
+  if (variable_get('content_overlay_enabled', FALSE) == 0) {
+    $excluded = TRUE;
+  }
+
   // Check to see if the path coincides with any excluded paths
   $current_page = drupal_get_path_alias($_GET['q']);    
-  $excluded_pages = variable_get('popup_ads_excluded_pages', '');
-  if(_popup_ads_contains($current_page, $excluded_pages)) {
+  $excluded_pages = variable_get('content_overlay_excluded_pages', '');
+  if(_content_overlay_contains($current_page, $excluded_pages)) {
     $excluded = TRUE;
   }
 
   // Checks to see if the user's role coincides with any excluded roles
-  $excluded_roles = array_intersect(variable_get('popup_ads_excluded_roles', array()), array_keys($user->roles));
+  $excluded_roles = array_intersect(variable_get('content_overlay_excluded_roles', array()), array_keys($user->roles));
   if ($excluded_roles) {
     $excluded = TRUE;
   }
 
   // Checks to see if the current node is in the list of excluded node types
   $node = menu_get_object();
-  $excluded_nodes = variable_get('popup_ads_node_types', array());
+  $excluded_nodes = variable_get('content_overlay_node_types', array());
   if ($node->type && $excluded_nodes[$node->type] !== 0) {
     $excluded = TRUE;
   }
 
   // If any one of the above criterias are bot triggered, we show the pop up box on the page
   if ($excluded != TRUE) {
-    $output .= theme('popup_ads');
+    $output .= theme('content_overlay');
   }
 
   return $output;
@@ -214,40 +215,18 @@ function popup_ads_popup_ads() {
 /**
  * Implementation of hook_footer.
  */
-function popup_ads_footer() {
-  $output = popup_ads_popup_ads();
+function content_overlay_footer() {
+  $output = content_overlay_box();
   if($output != '') {
     return $output;
   }
-}
-
-/**
- *  Using this function to abstract away how we actually get the ad as its currently in flux
- */
-function _popup_ads_get_ad(){
-  $markup = '
-  <div id="adwall-block" class="block block-google_admanager">
-    <div class="content">
-      <div id="gam-holder-adwall-block" class="gam-holder">
-  			<div class="gam_ad_policy_link_leaderboard">
-  				<a href="" class="gam_ad_policy_link">'.t('Ad Policy').'</a>
-  			</div>
-  			<script type="text/javascript">
-  			  GA_googleAddSlot("ca-pub-7565666144516430", "adwall_interstitial");
-  			  GA_googleFillSlot("adwall_interstitial");
-  			</script>
-  		</div>
-  	</div>  
-  </div>';
-  
-  return $markup;
 }
 
 
 /**
  *  Checks if an array has values that are not false or 0
  */
-function _popup_ads_has_values($array){
+function _content_overlay_has_values($array){
   if(!is_array($array)) { return FALSE; }
   foreach($array as $value){
     if($value !== 0 && $value !== FALSE){

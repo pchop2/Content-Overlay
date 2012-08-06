@@ -7,7 +7,7 @@
 	display: none;
 }
 
-#popup-ads .window {
+#content-overlay .window {
 	position: fixed;
 	width: 660px;
 	height: 450px;
@@ -16,46 +16,46 @@
   background-color: #fff;
 }
 
-#popup-ads .close {
+#content-overlay .close {
 	position: absolute;
 	top: -10px;
 	right: 0;
 	color: #fff;
 }
 
-#popup-ads .left-column {
+#content-overlay .left-column {
   float: left;
 	width: 282px;
 	height: 450px;
 	border-right: dashed 2px #666;
 }
 
-#popup-ads .right-column {
+#content-overlay .right-column {
   float: left;
 	width: 376px;
 	height: 450px;
 	overflow: hidden;
 }
 
-#popup-ads img {
+#content-overlay img {
 	display: block;
 }
 
-#popup-ads .issue-cover {
+#content-overlay .issue-cover {
 	padding: 0 16px;
 }
 
-#popup-ads .half-content {
+#content-overlay .half-content {
 	height: 405px;
 	width: 376px;
 	overflow: hidden;
 }
 
-#popup-ads .login-buttons {
+#content-overlay .login-buttons {
 	background: url('images/button-bg.gif');
 	height: 45px;
 }
 
-#popup-ads .login-buttons div{
+#content-overlay .login-buttons div{
 	float: left;
 }

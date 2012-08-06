@@ -1,4 +1,4 @@
-<div id="popup-ads">
+<div id="content-overlay">
   <div id="dialog" class="window">
     <a href="#" class="close"><?php print t('Close'); ?></a>
     <div class="content">

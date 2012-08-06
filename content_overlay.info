@@ -1,0 +1,4 @@
+name = "Content Overlay"
+description = "Displays content within an overlay box."
+core = 6.x
+package = "Content Overlay"
