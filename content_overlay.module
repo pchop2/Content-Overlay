@@ -3,9 +3,7 @@
  *  This module provides a way to entice users to signup by showing intermediate pages 
  *  You will need to set the cookie 'content_overlay_visited' when the conditions you wish to enforce are met
  */
- 
-//include our file that has forms and menu hooks
-include_once('content_overlay.register.inc');
+
 
 /**
  *  Implementation of hook_boot - may need to run even for cached pages to check that the user
@@ -84,6 +82,34 @@ function content_overlay_boot(){
       setcookie('SESS00000000000000000000000000000000', '', time() - variable_get('content_overlay_cookie_duration', 1800000) / 1000, '/');
     }
   }
+}
+
+/**
+ *  Implements hook_menu() 
+ *  to provide the configuration page and signup page
+ */
+function content_overlay_menu() {
+  $items = array();
+   
+  $items['admin/settings/content_overlay'] = array(
+    'title' => t('Content Overlay Settings'), 
+    'description' => t('Configuration options for content overlay.'), 
+    'page callback' => 'drupal_get_form', 
+    'page arguments' => array('content_overlay_admin_settings'),
+    'access arguments' => array('administer content overlay'), 
+    'type' => MENU_NORMAL_ITEM,
+    'file' => 'content_overlay.admin.inc',
+  );
+  
+  return $items; 
+}
+
+/**
+ *  Implements hook_perm() 
+ *  used to determine who can access the signup wall settings page
+ */
+function content_overlay_perm() {
+  return array('administer content overlay');
 }
 
 /**
