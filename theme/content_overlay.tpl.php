@@ -2,7 +2,7 @@
   <div id="dialog" class="window" style="width: <?php print $box_width; ?>; height: <?php print $box_height; ?>;">
     <a href="#" class="close"><?php print t('Close'); ?></a>
     <div class="content">
-    	Advertisements
+    	<?php print $content; ?>
 	</div>
   </div>
 

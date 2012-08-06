@@ -189,7 +189,10 @@ function _content_overlay_contains($path, $noshow){
 function content_overlay_theme($existing, $type, $theme, $path) {
   return array(
     'content_overlay' => array(
-      'arguments' => array('box_width' => variable_get('content_overlay_box_width', '700px'), 'box_height' => variable_get('content_overlay_box_height', '450px'),),
+      'arguments' => array('box_width' => variable_get('content_overlay_box_width', '700px'),
+                           'box_height' => variable_get('content_overlay_box_height', '450px'),
+                           'content' => variable_get('content_overlay_overlay_content', ''),
+                           ),
       'path' => drupal_get_path('module', 'content_overlay') . '/theme',
       'template' => 'content_overlay',
     ),
