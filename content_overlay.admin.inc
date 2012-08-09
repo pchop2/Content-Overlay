@@ -9,9 +9,9 @@ function content_overlay_admin_settings() {
 
   $form['content_overlay_enabled'] = array(
     '#type' => 'checkbox',
-    '#title' => t('Enable Signup Popup'),
+    '#title' => t('Enable Content Overlay'),
     '#default_value' => variable_get('content_overlay_enabled', FALSE),
-    '#description' => t('Should signup popup be shown at all.')
+    '#description' => t('Enable content overlay on your site.')
   );
 
   $form['content_overlay_cookie_duration'] = array(
@@ -76,5 +76,17 @@ function content_overlay_admin_settings() {
 function content_overlay_admin_settings_validate($form, &$form_state) {
   if (!is_numeric($form_state['values']['content_overlay_cookie_duration'])) {
     form_set_error('text', t('Cookie life expentancy must be a number.'));
+  }
+
+  // Verify if width is correct
+  preg_match('/^(\d+(px|em|ex|pt|in|pc|mm|cm))$/', $form_state['values']['content_overlay_box_width'], $width);
+  if (!$width) {
+    form_set_error('text', t('Your box width is invalid (perhaps try "700px" or "80em")'));
+  }
+
+  // Verify if height is correct
+  preg_match('/^(\d+(px|em|ex|pt|in|pc|mm|cm))$/', $form_state['values']['content_overlay_box_height'], $height);
+  if (!$height) {
+    form_set_error('text', t('Your box height is invalid (perhaps try "700px" or "80em")'));
   }
 }
